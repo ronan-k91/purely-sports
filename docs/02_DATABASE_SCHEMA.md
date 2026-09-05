@@ -1,19 +1,12 @@
-# Purely Sports — Database Schema
-
-**Status:** V0 — Locked Database Specification
-**Document:** `docs/02_DATABASE_SCHEMA.md`
-**Last Updated:** 2026-09-05
-
+Purely Sports — Database Schema
+Status: V0 — Locked Database Specification
+Document: `docs/02_DATABASE_SCHEMA.md`
+Last Updated: 2026-09-05
 ---
-
-# 1. Purpose
-
+1. Purpose
 This document defines the V0 PostgreSQL database schema for Purely Sports.
-
 The database is the persistent system of record for the AI-native newsroom.
-
 The schema must preserve the complete editorial chain:
-
 ```text
 SOURCE
    ↓
@@ -37,81 +30,55 @@ HUMAN APPROVAL
    ↓
 PUBLICATION
 ```
-
 The database must support:
-
-* story discovery
-* source tracking
-* source observation
-* structured claims
-* claim-level verification
-* evidence provenance
-* entities
-* events
-* editorial decisions
-* content generation
-* content versioning
-* QA
-* human approval
-* publication tracking
-* AI agent observability
-* auditability
-* future expansion beyond sports
-
+story discovery
+source tracking
+source observation
+structured claims
+claim-level verification
+evidence provenance
+entities
+events
+editorial decisions
+content generation
+content versioning
+QA
+human approval
+publication tracking
+AI agent observability
+auditability
+future expansion beyond sports
 The V0 schema should be the smallest relational model capable of reliably supporting this workflow.
-
 ---
-
-# 2. Technology
-
+2. Technology
 V0 database:
-
 ```text
 PostgreSQL
 ```
-
 ORM:
-
 ```text
 SQLAlchemy
 ```
-
 Migrations:
-
 ```text
 Alembic
 ```
-
 Application validation:
-
 ```text
 Pydantic
 ```
-
 The database is the authoritative persistent store.
-
 Workflow-engine state must not be the only place where critical business state exists.
-
 ---
-
-# 3. Core Design Principles
-
-## 3.1 Relational First
-
+3. Core Design Principles
+3.1 Relational First
 Important business concepts must be represented as relational records.
-
 JSONB should not be used as a substitute for relational modelling.
-
 Use JSONB only where the structure is intentionally flexible.
-
 ---
-
-## 3.2 Provenance First
-
+3.2 Provenance First
 Every important factual claim should be traceable to evidence.
-
 The preferred provenance chain is:
-
 ```text
 CLAIM
   ↓
@@ -121,84 +88,53 @@ SOURCE_OBSERVATION
   ↓
 SOURCE
 ```
-
 Do not duplicate provenance unnecessarily.
-
-For example, `evidence` does **not** need its own `source_id` because its `source_observation_id` already identifies the Source.
-
+For example, `evidence` does not need its own `source_id` because its `source_observation_id` already identifies the Source.
 ---
-
-## 3.3 Verification Is Not Approval
-
+3.3 Verification Is Not Approval
 These are different concepts:
-
 ```text
 VERIFIED
 ```
-
 means:
-
 > The available evidence sufficiently supports the claim.
-
 ```text
 APPROVED
 ```
-
 means:
-
 > An authorised human has approved this specific content version for publication.
-
 ```text
 PUBLISHED
 ```
-
 means:
-
 > A publication attempt actually succeeded on a specific channel.
-
 None of these states should be treated as interchangeable.
-
 ---
-
-## 3.4 AI Recommendations Are Not Authority
-
+3.4 AI Recommendations Are Not Authority
 AI may:
-
-* discover
-* research
-* verify
-* score
-* recommend
-* write
-* QA
-
+discover
+research
+verify
+score
+recommend
+write
+QA
 AI may not bypass application rules or human approval.
-
 Critical publication rules must be enforced by application code.
-
 ---
-
-## 3.5 History Matters
-
+3.5 History Matters
 Editorial records should normally be append-only or versioned.
-
 Do not silently overwrite:
-
-* approved content
-* published content
-* verification decisions
-* editorial decisions
-* QA reviews
-* publication results
-
+approved content
+published content
+verification decisions
+editorial decisions
+QA reviews
+publication results
 Historical records are part of the newsroom audit trail.
-
 ---
-
-# 4. Table Inventory
-
+4. Table Inventory
 The V0 schema contains the following tables:
-
 ```text
 sports
 entities
@@ -230,11 +166,8 @@ qa_reviews
 approvals
 publication_records
 ```
-
 ---
-
-# 5. Relationship Overview
-
+5. Relationship Overview
 ```text
 SPORT
  ├── LEAGUE
@@ -275,9 +208,7 @@ STORY
 AGENT_RUN
  └── STORY
 ```
-
 The core publication provenance chain is:
-
 ```text
 SOURCE
    ↓
@@ -293,74 +224,45 @@ APPROVAL
    ↓
 PUBLICATION_RECORD
 ```
-
 ---
-
-# 6. Primary Key Standard
-
+6. Primary Key Standard
 All major tables use:
-
 ```text
 UUID PRIMARY KEY
 ```
-
 Recommended SQLAlchemy generation:
-
 ```text
 uuid.uuid4()
 ```
-
 IDs must not be predictable sequential integers.
-
 ---
-
-# 7. Timestamp Standard
-
+7. Timestamp Standard
 Use:
-
 ```text
 TIMESTAMPTZ
 ```
-
 for timestamps.
-
 Major mutable tables should include:
-
 ```text
 created_at
 updated_at
 ```
-
 Immutable observation/event records may only require `created_at` plus their domain timestamp.
-
 The application should use UTC internally.
-
 ---
-
-# 8. Status Standard
-
+8. Status Standard
 Workflow/status fields should use:
-
 ```text
 VARCHAR(50)
 ```
-
 rather than PostgreSQL ENUMs in V0.
-
 Allowed values are application-level constants validated by Pydantic/domain logic.
-
 This keeps workflow evolution straightforward.
-
 ---
-
-# 9. SPORTS
-
-## Purpose
-
+9. SPORTS
+Purpose
 Represents a sport.
-
 Examples:
-
 ```text
 Football
 Rugby
@@ -371,9 +273,7 @@ MMA
 Golf
 Basketball
 ```
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 name            VARCHAR(100) NOT NULL
@@ -383,19 +283,12 @@ is_active       BOOLEAN NOT NULL DEFAULT TRUE
 created_at      TIMESTAMPTZ NOT NULL
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
 ---
-
-# 10. ENTITIES
-
-## Purpose
-
+10. ENTITIES
+Purpose
 Provides a generic canonical identity for identifiable things that may appear throughout the media system.
-
 The Entity layer supports future expansion beyond sports.
-
 Examples:
-
 ```text
 Manchester United
 Liverpool FC
@@ -403,9 +296,7 @@ Premier League
 A named organisation
 A person
 ```
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 entity_type     VARCHAR(50) NOT NULL
@@ -416,9 +307,7 @@ metadata        JSONB NULL
 created_at      TIMESTAMPTZ NOT NULL
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Entity Types
-
+Entity Types
 ```text
 ATHLETE
 TEAM
@@ -427,39 +316,25 @@ ORGANISATION
 PERSON
 OTHER
 ```
-
-## Constraints
-
+Constraints
 ```text
 UNIQUE(entity_type, slug)
 ```
-
-## Important Design Rule
-
+Important Design Rule
 Do not put nullable columns such as:
-
 ```text
 team_id
 athlete_id
 league_id
 ```
-
 inside `entities`.
-
 The generic Entity table must not become a polymorphic foreign-key container.
-
 Instead, sport-specific records use Entity as their canonical identity.
-
 ---
-
-# 11. LEAGUES
-
-## Purpose
-
+11. LEAGUES
+Purpose
 Represents a league or competition.
-
 Examples:
-
 ```text
 Premier League
 Champions League
@@ -467,9 +342,7 @@ Six Nations
 ATP Tour
 Formula 1 World Championship
 ```
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 
@@ -487,27 +360,17 @@ is_active       BOOLEAN NOT NULL DEFAULT TRUE
 created_at      TIMESTAMPTZ NOT NULL
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Entity Rule
-
+Entity Rule
 The referenced Entity must have:
-
 ```text
 entity_type = LEAGUE
 ```
-
 This is an application/domain invariant.
-
 ---
-
-# 12. TEAMS
-
-## Purpose
-
+12. TEAMS
+Purpose
 Represents a sports team or club.
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 
@@ -525,33 +388,20 @@ is_active       BOOLEAN NOT NULL DEFAULT TRUE
 created_at      TIMESTAMPTZ NOT NULL
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Entity Rule
-
+Entity Rule
 The referenced Entity must have:
-
 ```text
 entity_type = TEAM
 ```
-
-## League Relationship
-
+League Relationship
 A Team must not have a permanent `league_id`.
-
 Teams may participate in different leagues or competitions over time.
-
 A historical competition-membership model may be added later.
-
 ---
-
-# 13. ATHLETES
-
-## Purpose
-
+13. ATHLETES
+Purpose
 Represents an individual athlete.
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 
@@ -570,27 +420,17 @@ is_active       BOOLEAN NOT NULL DEFAULT TRUE
 created_at      TIMESTAMPTZ NOT NULL
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Entity Rule
-
+Entity Rule
 The referenced Entity must have:
-
 ```text
 entity_type = ATHLETE
 ```
-
 Team membership is intentionally not modelled in V0 because athlete-team relationships are time-dependent.
-
 ---
-
-# 14. SOURCES
-
-## Purpose
-
+14. SOURCES
+Purpose
 Represents an origin of information.
-
 Examples:
-
 ```text
 Official club website
 League website
@@ -601,9 +441,7 @@ Press conference
 Interview
 Public database
 ```
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 
@@ -622,9 +460,7 @@ is_active       BOOLEAN NOT NULL DEFAULT TRUE
 created_at      TIMESTAMPTZ NOT NULL
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Source Types
-
+Source Types
 ```text
 OFFICIAL
 SPORTS_MEDIA
@@ -635,9 +471,7 @@ PRESS_CONFERENCE
 DATABASE
 OTHER
 ```
-
-## Trust Levels
-
+Trust Levels
 ```text
 PRIMARY
 TRUSTED
@@ -645,35 +479,22 @@ STANDARD
 LOW
 UNKNOWN
 ```
-
 Trust level is an editorial aid.
-
 It is not proof of truth.
-
 ---
-
-# 15. SOURCE_OBSERVATIONS
-
-## Purpose
-
+15. SOURCE_OBSERVATIONS
+Purpose
 Represents a specific observation/retrieval from a Source.
-
 This distinction is fundamental.
-
 A Source is:
-
 ```text
 Official Club Website
 ```
-
 A Source Observation is:
-
 ```text
 The specific announcement retrieved from that website at a particular time.
 ```
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -698,9 +519,7 @@ raw_metadata        JSONB NULL
 
 created_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Retrieval Methods
-
+Retrieval Methods
 ```text
 WEB
 API
@@ -709,29 +528,17 @@ SOCIAL
 MANUAL
 OTHER
 ```
-
-## Content Hash
-
+Content Hash
 `content_hash` represents a hash of the observed source payload/content when available.
-
 It may be used to detect changes or duplicate observations.
-
 It is not itself evidence of truth.
-
 ---
-
-# 16. STORIES
-
-## Purpose
-
+16. STORIES
+Purpose
 The Story is the central newsroom object.
-
 A Story represents a developing or potentially publishable editorial subject.
-
 A Story may aggregate multiple Source Observations.
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -762,9 +569,7 @@ created_at          TIMESTAMPTZ NOT NULL
 
 updated_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Story Status
-
+Story Status
 ```text
 DISCOVERED
 RESEARCHING
@@ -778,9 +583,7 @@ REJECTED
 PUBLISHED
 ARCHIVED
 ```
-
-## Priority
-
+Priority
 ```text
 LOW
 NORMAL
@@ -788,50 +591,32 @@ HIGH
 URGENT
 BREAKING
 ```
-
-## Urgency
-
+Urgency
 ```text
 LOW
 NORMAL
 HIGH
 URGENT
 ```
-
-## Scores
-
+Scores
 Each score must be between:
-
 ```text
 0.00
 ```
-
 and:
-
 ```text
 100.00
 ```
-
 These are current advisory assessments.
-
 They are not authoritative workflow decisions.
-
 They may be recalculated as the Story develops.
-
 V0 does not require historical score storage.
-
 ---
-
-# 17. STORY_SOURCE_OBSERVATIONS
-
-## Purpose
-
+17. STORY_SOURCE_OBSERVATIONS
+Purpose
 Connects Stories to the Source Observations that contributed to them.
-
 A Story may have many Source Observations.
-
-## Columns
-
+Columns
 ```text
 story_id                 UUID NOT NULL
                          REFERENCES stories(id)
@@ -843,15 +628,11 @@ relationship             VARCHAR(50) NOT NULL DEFAULT 'DISCOVERY'
 
 created_at               TIMESTAMPTZ NOT NULL
 ```
-
-## Primary Key
-
+Primary Key
 ```text
 PRIMARY KEY(story_id, source_observation_id)
 ```
-
-## Relationship Types
-
+Relationship Types
 ```text
 DISCOVERY
 CORROBORATION
@@ -859,25 +640,16 @@ UPDATE
 BACKGROUND
 CONTEXT
 ```
-
 ---
-
-# 18. CLAIMS
-
-## Purpose
-
+18. CLAIMS
+Purpose
 Represents an individual factual assertion associated with a Story.
-
 Claims are first-class objects.
-
 Example:
-
 ```text
 Player X signed for Club Y.
 ```
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -900,38 +672,27 @@ updated_at          TIMESTAMPTZ NOT NULL
 
 verified_at         TIMESTAMPTZ NULL
 ```
-
-## Constraints
-
+Constraints
 ```text
 UNIQUE(story_id, sequence)
 ```
-
-## Sequence
-
+Sequence
 Claims should have a deterministic sequence within each Story:
-
 ```text
 1
 2
 3
 ...
 ```
-
 This provides stable identification such as:
-
 ```text
 Claim 1
 Claim 2
 Claim 3
 ```
-
 ---
-
-# 19. CLAIM VERIFICATION
-
-## Verification Status
-
+19. CLAIM VERIFICATION
+Verification Status
 ```text
 UNVERIFIED
 UNDER_REVIEW
@@ -940,49 +701,30 @@ CONTRADICTED
 VERIFIED
 REJECTED
 ```
-
-## Confidence
-
+Confidence
 Range:
-
 ```text
 0.0000 - 1.0000
 ```
-
 Confidence is an assessment.
-
 It is not proof.
-
 The authoritative state is:
-
 ```text
 verification_status
 ```
-
-## Important Rule
-
+Important Rule
 The Writer must not knowingly use:
-
 ```text
 REJECTED
 ```
-
 claims.
-
 Claims with insufficient verification should also normally be excluded from publishable factual copy unless explicitly handled by editorial logic.
-
 ---
-
-# 20. EVIDENCE
-
-## Purpose
-
+20. EVIDENCE
+Purpose
 Represents specific information supporting or contradicting a Claim.
-
 Evidence must point to a specific Source Observation.
-
-## Columns
-
+Columns
 ```text
 id                      UUID PRIMARY KEY
 
@@ -1000,33 +742,23 @@ locator                 TEXT NULL
 
 created_at              TIMESTAMPTZ NOT NULL
 ```
-
-## Relationship Types
-
+Relationship Types
 ```text
 SUPPORTS
 CONTRADICTS
 ```
-
-## Locator
-
+Locator
 `locator` identifies where the evidence can be found when useful.
-
 Examples:
-
 ```text
 Paragraph 4
 Official statement
 Quote timestamp 01:24
 Section: Transfer announcement
 ```
-
-## Important Rule
-
+Important Rule
 Do not store `source_id` on Evidence.
-
 The provenance chain is:
-
 ```text
 Evidence
    ↓
@@ -1034,19 +766,12 @@ Source Observation
    ↓
 Source
 ```
-
 This avoids duplicated foreign-key relationships that could become inconsistent.
-
 ---
-
-# 21. STORY_ENTITIES
-
-## Purpose
-
+21. STORY_ENTITIES
+Purpose
 Associates a Story with relevant canonical Entities.
-
-## Columns
-
+Columns
 ```text
 story_id        UUID NOT NULL
                 REFERENCES stories(id)
@@ -1058,15 +783,11 @@ role            VARCHAR(50) NULL
 
 created_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Primary Key
-
+Primary Key
 ```text
 PRIMARY KEY(story_id, entity_id)
 ```
-
-## Roles
-
+Roles
 ```text
 SUBJECT
 TEAM
@@ -1076,21 +797,13 @@ MANAGER
 LOCATION
 OTHER
 ```
-
 ---
-
-# 22. EVENTS
-
-## Purpose
-
+22. EVENTS
+Purpose
 Represents something that happens or is scheduled to happen.
-
 An Event is distinct from a Story.
-
 One Event may be discussed by multiple Stories.
-
 Examples:
-
 ```text
 Match
 Transfer
@@ -1101,9 +814,7 @@ Injury
 Managerial appointment
 Retirement
 ```
-
-## Columns
-
+Columns
 ```text
 id              UUID PRIMARY KEY
 
@@ -1128,9 +839,7 @@ created_at      TIMESTAMPTZ NOT NULL
 
 updated_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Event Types
-
+Event Types
 ```text
 MATCH
 TRANSFER
@@ -1143,19 +852,12 @@ APPOINTMENT
 RETIREMENT
 OTHER
 ```
-
 V0 does not attempt to model every sport-specific event field.
-
 ---
-
-# 23. STORY_EVENTS
-
-## Purpose
-
+23. STORY_EVENTS
+Purpose
 Associates Stories with Events.
-
-## Columns
-
+Columns
 ```text
 story_id        UUID NOT NULL
                 REFERENCES stories(id)
@@ -1167,15 +869,11 @@ relationship    VARCHAR(50) NOT NULL DEFAULT 'ABOUT'
 
 created_at      TIMESTAMPTZ NOT NULL
 ```
-
-## Primary Key
-
+Primary Key
 ```text
 PRIMARY KEY(story_id, event_id)
 ```
-
-## Relationship Types
-
+Relationship Types
 ```text
 ABOUT
 UPDATE
@@ -1183,27 +881,16 @@ PREVIEW
 REACTION
 BACKGROUND
 ```
-
 ---
-
-# 24. EDITORIAL_DECISIONS
-
-## Purpose
-
+24. EDITORIAL_DECISIONS
+Purpose
 Stores editorial assessments/decisions concerning a Story.
-
 Verification asks:
-
 > Is the claim sufficiently supported?
-
 Editorial decision asks:
-
 > Should Purely Sports publish or continue working on this Story?
-
 These must remain separate.
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -1226,42 +913,28 @@ created_by_id       UUID NULL
 
 created_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Decisions
-
+Decisions
 ```text
 PUBLISH
 DO_NOT_PUBLISH
 HOLD
 NEEDS_MORE_INFORMATION
 ```
-
-## Created By
-
+Created By
 ```text
 AI
 HUMAN
 SYSTEM
 ```
-
-## Important Rule
-
+Important Rule
 Multiple Editorial Decisions may exist for the same Story.
-
 They form an audit trail.
-
 The latest valid decision may represent the current editorial recommendation.
-
 ---
-
-# 25. CONTENT_OUTPUTS
-
-## Purpose
-
+25. CONTENT_OUTPUTS
+Purpose
 Represents a specific content version generated from a Story.
-
 Examples:
-
 ```text
 Article
 Social post
@@ -1269,9 +942,7 @@ Video script
 Newsletter item
 Creator brief
 ```
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -1298,15 +969,11 @@ created_at          TIMESTAMPTZ NOT NULL
 
 updated_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Constraints
-
+Constraints
 ```text
 UNIQUE(story_id, content_type, version)
 ```
-
-## Content Types
-
+Content Types
 ```text
 ARTICLE
 SOCIAL_POST
@@ -1316,9 +983,7 @@ GRAPHIC
 NEWSLETTER
 CREATOR_BRIEF
 ```
-
-## Status
-
+Status
 ```text
 DRAFT
 IN_QA
@@ -1330,73 +995,60 @@ PUBLISHED
 SUPERSEDED
 ARCHIVED
 ```
-
-## Generated By
-
+Generated By
 ```text
 AI
 HUMAN
 SYSTEM
 ```
-
-## Important Rule
-
+Important Rule
 Each meaningful revision is a new version.
-
 Do not overwrite an approved or published version.
-
 ---
-
-# 26. CONTENT_CLAIMS
-
-## Purpose
-
+26. CONTENT_CLAIMS
+Purpose
 Associates a specific Content Output version with the Claims it uses.
-
 This is essential for traceability.
-
-## Columns
-
+Columns
 ```text
-content_output_id   UUID NOT NULL
-                    REFERENCES content_outputs(id)
+content_output_id              UUID NOT NULL
+                               REFERENCES content_outputs(id)
 
-claim_id            UUID NOT NULL
-                    REFERENCES claims(id)
+claim_id                       UUID NOT NULL
+                               REFERENCES claims(id)
 
-created_at          TIMESTAMPTZ NOT NULL
+claim_statement_snapshot       TEXT NOT NULL
+
+claim_verification_status_snapshot
+                               VARCHAR(30) NOT NULL
+
+claim_confidence_snapshot      NUMERIC(5,4) NULL
+
+created_at                     TIMESTAMPTZ NOT NULL
 ```
-
-## Primary Key
-
+Primary Key
 ```text
 PRIMARY KEY(content_output_id, claim_id)
 ```
-
+The snapshot fields preserve the factual/verification state actually used by that content version even if the canonical Claim is later updated as a story develops.
 This allows the system to answer:
-
 > Which claims were used by this exact content version?
-
+It also preserves the claim statement and verification assessment that existed when the content version was associated with the claim.
+Important Rule
+`content_claims` is a historical snapshot boundary. Updating a canonical Claim must not rewrite the claim snapshot stored against an existing Content Output version.
 ---
-
-# 27. AGENT_RUNS
-
-## Purpose
-
+27. AGENT_RUNS
+Purpose
 Tracks AI agent executions.
-
 Used for:
-
-* observability
-* debugging
-* evaluation
-* reliability
-* model comparison
-* cost tracking
-* performance analysis
-
-## Columns
-
+observability
+debugging
+evaluation
+reliability
+model comparison
+cost tracking
+performance analysis
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -1431,9 +1083,7 @@ created_at          TIMESTAMPTZ NOT NULL
 
 completed_at        TIMESTAMPTZ NULL
 ```
-
-## Agent Names
-
+Agent Names
 ```text
 PS-NEWSROOM
 PS-SCOUT
@@ -1442,11 +1092,8 @@ PS-EDITOR
 PS-WRITER
 PS-QA
 ```
-
-## Task Types
-
+Task Types
 Examples:
-
 ```text
 DISCOVER
 RESEARCH
@@ -1458,30 +1105,20 @@ QA
 SUMMARISE
 CLASSIFY
 ```
-
-## Status
-
+Status
 ```text
 RUNNING
 SUCCEEDED
 FAILED
 CANCELLED
 ```
-
 ---
-
-# 28. QA_REVIEWS
-
-## Purpose
-
+28. QA_REVIEWS
+Purpose
 Stores structured quality-assurance reviews of a specific Content Output version.
-
 PS-QA should act adversarially:
-
 > TRY TO KILL THE STORY.
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -1497,19 +1134,14 @@ agent_run_id        UUID NULL
 
 created_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Results
-
+Results
 ```text
 PASS
 FAIL
 NEEDS_REVISION
 ```
-
-## Finding Structure
-
+Finding Structure
 Example:
-
 ```json
 [
   {
@@ -1524,11 +1156,8 @@ Example:
   }
 ]
 ```
-
-## Finding Types
-
+Finding Types
 Examples:
-
 ```text
 FACTUAL
 SOURCE
@@ -1541,23 +1170,14 @@ PLATFORM
 ORIGINALITY
 OTHER
 ```
-
-## Important Rule
-
+Important Rule
 QA is associated with the exact Content Output version.
-
 A new version requires a new QA review.
-
 ---
-
-# 29. APPROVALS
-
-## Purpose
-
+29. APPROVALS
+Purpose
 Records explicit human approval/rejection of a specific Content Output version.
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -1566,77 +1186,51 @@ content_output_id   UUID NOT NULL
 
 decision            VARCHAR(30) NOT NULL
 
-approved_by         UUID NULL
+decided_by           UUID NULL
 
 notes               TEXT NULL
 
 created_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Decisions
-
+Decisions
 ```text
 APPROVE
 REJECT
 REQUEST_EDIT
 ```
-
-## Important Rule
-
+Important Rule
 Approval is version-specific.
-
 Example:
-
 ```text
 Article v1
 ```
-
 approved does not imply:
-
 ```text
 Article v2
 ```
-
 approved.
-
 ---
-
-# 30. Approval Identity
-
+30. Approval Identity
 V0 does not include a full user/authentication schema.
-
 Therefore:
-
 ```text
-approved_by UUID
+decided_by UUID
 ```
-
 is an application-level identity reference.
-
 It is not a foreign key in V0.
-
 A future authentication system can introduce:
-
 ```text
 users
 roles
 permissions
 ```
-
 and convert this relationship into a formal foreign key if appropriate.
-
 ---
-
-# 31. PUBLICATION_RECORDS
-
-## Purpose
-
+31. PUBLICATION_RECORDS
+Purpose
 Records the actual publication attempt/result for a specific Content Output version.
-
 Approval and publication are deliberately separate.
-
-## Columns
-
+Columns
 ```text
 id                  UUID PRIMARY KEY
 
@@ -1661,11 +1255,8 @@ created_at          TIMESTAMPTZ NOT NULL
 
 updated_at          TIMESTAMPTZ NOT NULL
 ```
-
-## Channels
-
+Channels
 Examples:
-
 ```text
 WEBSITE
 X
@@ -1674,9 +1265,7 @@ YOUTUBE
 NEWSLETTER
 OTHER
 ```
-
-## Status
-
+Status
 ```text
 PENDING
 PUBLISHING
@@ -1684,11 +1273,8 @@ PUBLISHED
 FAILED
 CANCELLED
 ```
-
 One Content Output may have multiple Publication Records.
-
 Example:
-
 ```text
 Article v3
  ├── Website
@@ -1696,17 +1282,11 @@ Article v3
  ├── Instagram
  └── Newsletter
 ```
-
 Each publication is independently auditable.
-
 ---
-
-# 32. Publication Safety Rules
-
+32. Publication Safety Rules
 The application must validate all publication requirements before a publication is allowed to succeed.
-
 At minimum:
-
 ```text
 1. Content Output exists.
 
@@ -1723,18 +1303,15 @@ At minimum:
 7. Content Output is not REJECTED.
 
 8. Publication is authorised for the requested channel.
+
+9. The application must prevent accidental duplicate successful publication records for the same Content Output version and channel unless the operation is explicitly treated as a separate publication event.
 ```
-
+In V0, channel authorization and rights checks may be enforced through application configuration and service-layer rules rather than dedicated database entities. A full rights and publication-channel model is intentionally deferred.
 AI must never directly bypass these checks.
-
 The application, not the language model, controls publication authority.
-
 ---
-
-# 33. Content Version Lifecycle
-
+33. Content Version Lifecycle
 Example:
-
 ```text
 ARTICLE v1
    ↓
@@ -1754,9 +1331,7 @@ PUBLICATION
    ↓
 PUBLISHED
 ```
-
 If an edit is required after approval:
-
 ```text
 ARTICLE v2
    ↓
@@ -1770,88 +1345,59 @@ HUMAN APPROVAL
    ↓
 PUBLICATION
 ```
-
 The previous version remains in the database.
-
 ---
-
-# 34. Story Status vs Content Status
-
+34. Story Status vs Content Status
 Story status and Content Output status represent different layers.
-
 Example:
-
 ```text
 Story.status
 =
 IN_PRODUCTION
 ```
-
 while:
-
 ```text
 ContentOutput.status
 =
 DRAFT
 ```
-
 This is valid.
-
 Likewise:
-
 ```text
 Story.status
 =
 AWAITING_APPROVAL
 ```
-
 while:
-
 ```text
 ContentOutput.status
 =
 AWAITING_APPROVAL
 ```
-
 may also be valid.
-
 The Content Output version and Approval records remain the authoritative records for content approval.
-
 Story status is a workflow summary.
-
 ---
-
-# 35. Story APPROVED State
-
+35. Story APPROVED State
 `stories.status = APPROVED` is a workflow summary only.
-
 It must not be used as proof that a particular Content Output version is approved.
-
 The authoritative approval relationship is:
-
 ```text
 CONTENT_OUTPUT
       ↓
 APPROVAL
 ```
-
 This prevents a Story-level approval from accidentally authorising a later content version.
-
 ---
-
-# 36. Evidence and Verification Rules
-
+36. Evidence and Verification Rules
 A Claim may have:
-
 ```text
 zero evidence
 one piece of evidence
 multiple supporting pieces
 supporting and contradicting evidence
 ```
-
 Example:
-
 ```text
 Claim:
 Player X signed Club Y.
@@ -1868,19 +1414,12 @@ Evidence C:
 Later club statement
 CONTRADICTS
 ```
-
 All three remain stored.
-
 The verifier determines the current Claim verification status.
-
 ---
-
-# 37. Source Observation and Story Rules
-
+37. Source Observation and Story Rules
 A Source Observation does not automatically create a new Story.
-
 Example:
-
 ```text
 Observation 1
 Rumour
@@ -1891,33 +1430,21 @@ Offer reported
 Observation 3
 Official confirmation
 ```
-
 These may all belong to one Story.
-
 Therefore:
-
 ```text
 Source Observation
 ```
-
 and:
-
 ```text
 Story
 ```
-
 must remain separate concepts.
-
 ---
-
-# 38. Story and Event Rules
-
+38. Story and Event Rules
 A Story is an editorial object.
-
 An Event is a real-world occurrence or scheduled occurrence.
-
 Example:
-
 ```text
 EVENT:
 Player X signs Club Y.
@@ -1925,82 +1452,56 @@ Player X signs Club Y.
 STORY:
 Purely Sports reports that Player X has signed for Club Y.
 ```
-
 Multiple Stories may reference the same Event.
-
 ---
-
-# 39. Entity Rules
-
+39. Entity Rules
 The generic Entity layer is the canonical identity layer.
-
 For sport-specific entities:
-
 ```text
 Entity
    ↓
 Team
 ```
-
 or:
-
 ```text
 Entity
    ↓
 Athlete
 ```
-
 or:
-
 ```text
 Entity
    ↓
 League
 ```
-
 The relationship is one-to-one.
-
 Therefore:
-
 ```text
 teams.entity_id UNIQUE
 athletes.entity_id UNIQUE
 leagues.entity_id UNIQUE
 ```
-
 The application must ensure the Entity type matches the subtype.
-
 For example:
-
 ```text
 teams.entity_id → Entity(entity_type = TEAM)
 ```
-
 not:
-
 ```text
 Entity(entity_type = ATHLETE)
 ```
-
 ---
-
-# 40. Deletion Policy
-
+40. Deletion Policy
 Important editorial records should generally not be hard-deleted.
-
 Prefer status transitions such as:
-
 ```text
 ARCHIVED
 REJECTED
 SUPERSEDED
 INACTIVE
 ```
-
 Foreign-key deletion should therefore normally use restrictive behaviour for important editorial records.
-
 Do not cascade-delete a Story and silently erase its:
-
 ```text
 Claims
 Evidence
@@ -2009,33 +1510,20 @@ Approvals
 Publication history
 Agent runs
 ```
-
 Historical newsroom information must remain recoverable.
-
 ---
-
-# 41. Recommended Foreign-Key Behaviour
-
+41. Recommended Foreign-Key Behaviour
 For editorial relationships, the default policy should effectively be:
-
 ```text
 ON DELETE RESTRICT
 ```
-
 unless there is a clear reason otherwise.
-
 For many-to-many join tables, cascading deletion of the join row may be acceptable when the parent record is deliberately deleted during development, but production editorial data should generally not be deleted.
-
 V0 should prefer archiving over deletion.
-
 ---
-
-# 42. Recommended Indexes
-
+42. Recommended Indexes
 The following indexes should be created initially.
-
-## Stories
-
+Stories
 ```text
 INDEX stories_status_idx
 ON stories(status)
@@ -2049,9 +1537,7 @@ ON stories(created_at)
 INDEX stories_updated_at_idx
 ON stories(updated_at)
 ```
-
-## Source Observations
-
+Source Observations
 ```text
 INDEX source_observations_source_id_idx
 ON source_observations(source_id)
@@ -2059,9 +1545,7 @@ ON source_observations(source_id)
 INDEX source_observations_observed_at_idx
 ON source_observations(observed_at)
 ```
-
-## Claims
-
+Claims
 ```text
 INDEX claims_story_id_idx
 ON claims(story_id)
@@ -2069,9 +1553,7 @@ ON claims(story_id)
 INDEX claims_verification_status_idx
 ON claims(verification_status)
 ```
-
-## Evidence
-
+Evidence
 ```text
 INDEX evidence_claim_id_idx
 ON evidence(claim_id)
@@ -2079,9 +1561,7 @@ ON evidence(claim_id)
 INDEX evidence_source_observation_id_idx
 ON evidence(source_observation_id)
 ```
-
-## Content
-
+Content
 ```text
 INDEX content_outputs_story_id_idx
 ON content_outputs(story_id)
@@ -2092,16 +1572,12 @@ ON content_outputs(status)
 INDEX content_outputs_story_type_idx
 ON content_outputs(story_id, content_type)
 ```
-
-## QA
-
+QA
 ```text
 INDEX qa_reviews_content_output_id_idx
 ON qa_reviews(content_output_id)
 ```
-
-## Approvals
-
+Approvals
 ```text
 INDEX approvals_content_output_id_idx
 ON approvals(content_output_id)
@@ -2109,9 +1585,7 @@ ON approvals(content_output_id)
 INDEX approvals_created_at_idx
 ON approvals(created_at)
 ```
-
-## Publications
-
+Publications
 ```text
 INDEX publication_records_content_output_id_idx
 ON publication_records(content_output_id)
@@ -2119,9 +1593,7 @@ ON publication_records(content_output_id)
 INDEX publication_records_status_idx
 ON publication_records(status)
 ```
-
-## Agent Runs
-
+Agent Runs
 ```text
 INDEX agent_runs_story_id_idx
 ON agent_runs(story_id)
@@ -2132,17 +1604,11 @@ ON agent_runs(status)
 INDEX agent_runs_created_at_idx
 ON agent_runs(created_at)
 ```
-
 Do not create large numbers of speculative indexes in V0.
-
 ---
-
-# 43. Database-Level Checks
-
+43. Database-Level Checks
 Where practical, PostgreSQL CHECK constraints should enforce simple numerical invariants.
-
 Examples:
-
 ```text
 news_value BETWEEN 0 AND 100
 
@@ -2162,19 +1628,12 @@ claims.sequence > 0
 
 content_outputs.version > 0
 ```
-
 These are appropriate database constraints because they are stable structural rules.
-
 Workflow transitions remain application-level rules.
-
 ---
-
-# 44. Application-Level Invariants
-
+44. Application-Level Invariants
 The application must enforce rules that require business context.
-
 Examples:
-
 ```text
 Entity subtype must match entity_type.
 
@@ -2196,17 +1655,11 @@ Workflow transitions must be valid.
 
 AI cannot directly publish.
 ```
-
 Do not attempt to encode all of these as database triggers in V0.
-
 The service/application layer is the correct location for these business rules.
-
 ---
-
-# 45. Auditability
-
+45. Auditability
 The database should allow the newsroom to answer:
-
 ```text
 Who discovered the Story?
 
@@ -2242,17 +1695,11 @@ Did publication succeed or fail?
 
 Which AI agents participated?
 ```
-
 This is a core requirement of the system.
-
 ---
-
-# 46. Agent Observability
-
+46. Agent Observability
 Agent Runs should provide enough information to evaluate the newsroom without storing unnecessary sensitive data.
-
 Useful fields include:
-
 ```text
 agent_name
 task_type
@@ -2264,17 +1711,13 @@ estimated cost
 latency
 error
 ```
-
 Do not store secrets in:
-
 ```text
 input_metadata
 output_metadata
 error_message
 ```
-
 Never store:
-
 ```text
 API keys
 access tokens
@@ -2282,17 +1725,11 @@ passwords
 credentials
 session secrets
 ```
-
 unless a future dedicated secrets system explicitly requires it.
-
 ---
-
-# 47. Transaction Boundaries
-
+47. Transaction Boundaries
 Important operations should be transactional.
-
 Examples:
-
 ```text
 Create verification result
 
@@ -2306,19 +1743,12 @@ Create publication record
 
 Transition workflow state
 ```
-
 The application/service layer owns transaction boundaries.
-
 The database owns referential integrity.
-
 ---
-
-# 48. Alembic Migration Order
-
+48. Alembic Migration Order
 The initial migration should create tables in dependency order.
-
 Recommended order:
-
 ```text
 1. sports
 
@@ -2357,15 +1787,10 @@ Recommended order:
 
 21. publication_records
 ```
-
 This order minimises foreign-key dependency problems.
-
 ---
-
-# 49. V0 Intentionally Excluded
-
+49. V0 Intentionally Excluded
 Do not add the following simply because they may eventually be useful:
-
 ```text
 users
 roles
@@ -2399,19 +1824,12 @@ workflow_runs
 
 knowledge_graph_edges
 ```
-
 These are future extensions.
-
 They should be introduced only when actual product requirements justify them.
-
 ---
-
-# 50. Future Expansion
-
+50. Future Expansion
 The architecture is intentionally extensible.
-
 Possible future additions include:
-
 ```text
 users
 roles
@@ -2444,15 +1862,10 @@ content_revisions
 
 analytics_events
 ```
-
 The V0 schema should not attempt to solve these problems prematurely.
-
 ---
-
-# 51. V0 Editorial Data Flow
-
+51. V0 Editorial Data Flow
 The complete intended flow is:
-
 ```text
                     ┌─────────────┐
                     │    SOURCE   │
@@ -2502,15 +1915,10 @@ The complete intended flow is:
              ↓
     PUBLICATION RECORD
 ```
-
 ---
-
-# 52. Critical Safety Boundary
-
+52. Critical Safety Boundary
 The database supports the workflow but does not itself grant AI publication authority.
-
 The final publication decision must pass through:
-
 ```text
 QA
  ↓
@@ -2520,109 +1928,62 @@ Application Validation
  ↓
 Publication
 ```
-
 The language model cannot simply produce:
-
 ```text
 "publish": true
 ```
-
 and cause publication.
-
 The application must independently verify the required conditions.
-
 ---
-
-# 53. Final V0 Rules
-
+53. Final V0 Rules
 The following rules are considered foundational.
-
-### Rule 1
-
+Rule 1
 A Source is not the same thing as a Source Observation.
-
-### Rule 2
-
+Rule 2
 A Source Observation is not automatically a Story.
-
-### Rule 3
-
+Rule 3
 A Story may contain multiple Claims.
-
-### Rule 4
-
+Rule 4
 Claims are the fundamental units of factual verification.
-
-### Rule 5
-
+Rule 5
 Evidence belongs to Claims.
-
-### Rule 6
-
+Rule 6
 Evidence points to Source Observations.
-
-### Rule 7
-
+Rule 7
 Do not duplicate `source_id` on Evidence.
-
-### Rule 8
-
+Rule 8
 Verification is not editorial approval.
-
-### Rule 9
-
+Rule 9
 Editorial Decision is not publication.
-
-### Rule 10
-
+Rule 10
 Content Output represents a specific version.
-
-### Rule 11
-
+Rule 11
 Every meaningful content revision creates a new version.
-
-### Rule 12
-
+Rule 12
 Approval belongs to the exact Content Output version.
-
-### Rule 13
-
+Rule 12A
+Content Claims preserve a snapshot of the claim statement and verification assessment used by that exact Content Output version.
+Rule 13
 Approval of one version never automatically approves another.
-
-### Rule 14
-
+Rule 14
 QA belongs to the exact Content Output version.
-
-### Rule 15
-
+Rule 15
 Publication belongs to the exact Content Output version.
-
-### Rule 16
-
+Rule 16
 One Content Output may have multiple Publication Records.
-
-### Rule 17
-
+Rule 16A
+The application must prevent accidental duplicate successful publication records for the same Content Output version and channel unless explicitly treated as a separate publication event.
+Rule 17
 AI cannot bypass human approval.
-
-### Rule 18
-
+Rule 18
 Story status is a workflow summary, not proof of approval.
-
-### Rule 19
-
+Rule 19
 Claim verification status is authoritative for claim verification.
-
-### Rule 20
-
+Rule 20
 The database preserves editorial history.
-
 ---
-
-# 54. V0 Success Criteria
-
+54. V0 Success Criteria
 The database design is considered successful when Purely Sports can reliably trace:
-
 ```text
 Published Article
       ↓
@@ -2642,9 +2003,7 @@ Source Observation
       ↓
 Source
 ```
-
 And when the system can independently determine:
-
 ```text
 What happened?
 Where did the information come from?
@@ -2661,17 +2020,11 @@ Where?
 When?
 What did the AI do?
 ```
-
 ---
-
-# 55. Final Principle
-
+55. Final Principle
 The Purely Sports database is not merely an article database.
-
 It is the structured memory and accountability layer of the newsroom.
-
 The fundamental model is:
-
 ```text
 SOURCE
    ↓
@@ -2695,18 +2048,10 @@ HUMAN APPROVAL
    ↓
 PUBLICATION
 ```
-
 Every important factual statement should have a path toward evidence.
-
 Every publishable content version should have a path toward approval.
-
 Every publication should have a recorded outcome.
-
 Every important AI action should be observable.
-
 The schema should make correct newsroom behaviour easy, traceable and auditable, while making unsafe shortcuts difficult.
-
 This schema is the V0 database contract.
-
 Do not add complexity until the product demonstrates that the complexity is necessary.
-
