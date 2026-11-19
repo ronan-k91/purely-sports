@@ -2,12 +2,12 @@
 
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import create_engine, pool
 
+import app.models  # noqa: F401 — register model metadata as Phase 2 models are added.
+from alembic import context
 from app.config import get_settings
 from app.db.base import Base
-import app.models  # noqa: F401 — register model metadata as Phase 2 models are added.
 
 config = context.config
 if config.config_file_name is not None:

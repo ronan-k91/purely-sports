@@ -8,6 +8,10 @@ from app.main import app
 
 
 def test_readiness_succeeds_when_database_is_available(monkeypatch):
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://user:pass@localhost:5432/purely_sports",
+    )
     monkeypatch.setattr(main_module, "check_database_connection", lambda: None)
     with TestClient(app) as client:
         response = client.get("/ready")
@@ -16,6 +20,11 @@ def test_readiness_succeeds_when_database_is_available(monkeypatch):
 
 
 def test_readiness_returns_service_unavailable_when_database_fails(monkeypatch):
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://user:pass@localhost:5432/purely_sports",
+    )
+
     def fail_connection() -> None:
         raise OperationalError("SELECT 1", {}, RuntimeError("database unavailable"))
 

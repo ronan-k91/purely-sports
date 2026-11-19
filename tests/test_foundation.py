@@ -19,7 +19,7 @@ def reset_settings_cache():
 def test_settings_require_database_url(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        Settings.model_validate({})
 
 
 def test_health_endpoint(monkeypatch):
