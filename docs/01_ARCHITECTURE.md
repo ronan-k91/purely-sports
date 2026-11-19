@@ -461,7 +461,6 @@ TEAM
 LEAGUE
 ORGANISATION
 PERSON
-EVENT
 ```
 V0 should keep this implementation lightweight.
 We should not build a sophisticated knowledge graph in the initial version.
@@ -566,7 +565,6 @@ search_score
 urgency
 created_at
 updated_at
-published_at
 ```
 The exact scoring model should remain configurable.
 ---
@@ -808,8 +806,8 @@ Human approval is a first-class workflow state.
 V0 approval options:
 ```text
 APPROVE
-EDIT
 REJECT
+REQUEST_EDIT
 ```
 The Chief Editor is the final publishing authority.
 The approval record should conceptually identify:
@@ -1004,7 +1002,7 @@ HUMAN_APPROVAL
      │
      ├── REJECT → END
      │
-     ├── EDIT → WRITE
+     ├── REQUEST_EDIT → WRITE
      │
      └── APPROVE
            ↓
