@@ -1,7 +1,7 @@
 Purely Sports — System Architecture
 Status: V0 Architecture
 Document: 01_ARCHITECTURE.md
-Last Updated: 2026-09-05
+Last Updated: 2026-11-19
 ---
 1. Purpose
 Purely Sports is an AI-native sports media and sports intelligence platform.
@@ -613,7 +613,7 @@ or:
 ```text
 AWAITING_APPROVAL
  ↓
-EDIT
+REQUEST_EDIT
  ↓
 IN_PRODUCTION
 ```
