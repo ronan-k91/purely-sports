@@ -55,7 +55,7 @@ The health endpoint test does not require PostgreSQL; the database connectivity 
 
 ## Database migrations
 
-Alembic will be configured for PostgreSQL and SQLAlchemy metadata discovery. No migration is included in Phase 1. The initial migration is deferred until the Phase 2 model layer is complete and reviewed against docs/02_DATABASE_SCHEMA.md.
+Alembic is configured for PostgreSQL and SQLAlchemy metadata discovery. No migration is included in Phase 1. The initial migration is deferred until the Phase 2 model layer is complete and reviewed against docs/02_DATABASE_SCHEMA.md.
 
 ## Approved documentation
 
