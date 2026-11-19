@@ -1,0 +1,1 @@
+"""Purely Sports application package."""
